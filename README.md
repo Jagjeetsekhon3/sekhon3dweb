@@ -35,3 +35,6 @@ RLS is enabled across the ecommerce database. Customer records are scoped to the
 8. Business Manager sync
 9. Analytics dashboard
 10. Mobile-app-ready API/data contracts
+
+
+Deployment initialized for the SekhonStudio.com ecommerce application.
