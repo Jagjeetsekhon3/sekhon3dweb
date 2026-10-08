@@ -1,6 +1,6 @@
 import { Dashboard } from "@/components/dashboard";
 export const metadata = {
-  title: "Admin design preview | Sekhon Studio",
+  title: { absolute: "Admin design preview | Sekhon Studio" },
   robots: { index: false, follow: false },
 };
 export default function Preview() {

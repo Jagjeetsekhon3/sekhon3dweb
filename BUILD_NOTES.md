@@ -31,3 +31,12 @@ Existing guest cart policies permit access when customer_id is null without bind
 
 public/images/studio-hero.png is inspirational artwork, not a live catalog product. Generated with the built-in image generation tool.
 Prompt: Premium monochrome studio still life of a white spiral ribbed vase, graphite twisted vase, and white geometric object on a reflective black plinth; fine 3D print layers, soft side lighting, objects on the right and negative space on the left; no text or logos.
+
+## Verification completed
+- Production build and TypeScript checks passed.
+- Desktop and mobile storefront and dashboard layouts were visually reviewed.
+- Mobile navigation, catalog search and collection/custom links were exercised.
+- Signed-out requests to /admin redirect to /admin/login.
+- The inactive ecommerce Supabase project was restored to ACTIVE_HEALTHY. Its public products endpoint returned HTTP 200 and an empty array.
+- Vercel built the branch preview successfully. The hosted URL requires Vercel sign-in; its runtime was not verified beyond the deployment READY state.
+- Draft pull request: https://github.com/Jagjeetsekhon3/sekhon3dweb/pull/1
