@@ -1,2 +1,48 @@
-import {createClient} from "@/lib/supabase/server";
-export default async function Shop({searchParams}:{searchParams:Promise<{q?:string}>}){const {q=""}=await searchParams;const supabase=await createClient();let query=supabase.from("products").select("id,name,slug,price,compare_at_price,short_description").eq("active",true).order("created_at",{ascending:false});if(q)query=query.ilike("name","%"+q+"%");const {data:products}=await query;return <main><header className="header"><div className="container header-inner"><a className="brand" href="/">Sekhon Studio</a><a href="/cart">Cart</a></div></header><section className="section"><div className="container"><div className="section-head"><h1>Shop</h1><form><input name="q" defaultValue={q} placeholder="Search products" style={{padding:12,border:"1px solid #ddd",borderRadius:10}}/></form></div><div className="grid">{(products??[]).map(p=><a className="card" href={"/product/"+p.slug} key={p.id}><div className="thumb">Product image</div><div className="card-body"><strong>{p.name}</strong><div className="price">₹{Number(p.price).toLocaleString("en-IN")}</div><p className="muted">{p.short_description}</p></div></a>)}</div></div></section></main>}
+import { Navigation } from "@/components/navigation";
+import { Footer } from "@/components/footer";
+import { ProductGrid } from "@/components/product-grid";
+import { getProducts } from "@/lib/catalog";
+import { Icon } from "@/components/icon";
+export default async function Shop({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q = "" } = await searchParams;
+  const { products, error } = await getProducts(q);
+  return (
+    <>
+      <Navigation />
+      <main className="storefront inner-page">
+        <div className="page-heading">
+          <p className="eyebrow">THE STUDIO COLLECTION</p>
+          <h1>
+            Objects with <em>character.</em>
+          </h1>
+          <p>
+            Thoughtfully designed. Layer by layer. Find something that feels
+            like you.
+          </p>
+        </div>
+        <div className="catalog-toolbar">
+          <span>
+            {products.length} {products.length === 1 ? "object" : "objects"}
+          </span>
+          <form className="search-form" action="/shop">
+            <Icon name="search" />
+            <input
+              id="catalog-search"
+              aria-label="Search products"
+              name="q"
+              defaultValue={q}
+              placeholder="Find your next favourite…"
+            />
+            <button type="submit">Search</button>
+          </form>
+        </div>
+        <ProductGrid products={products} error={error} search={!!q} />
+      </main>
+      <Footer />
+    </>
+  );
+}

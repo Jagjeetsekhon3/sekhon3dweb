@@ -1,2 +1,102 @@
-import {createClient} from "@/lib/supabase/server";import {notFound} from "next/navigation";
-export default async function ProductPage({params}:{params:Promise<{slug:string}>}){const{slug}=await params;const supabase=await createClient();const{data:p}=await supabase.from("products").select("*,product_variants(id,name,sku,price,stock_qty,option_values),custom_input_fields(id,label,field_key,field_type,placeholder,help_text,required,options,sort_order)").eq("slug",slug).eq("active",true).maybeSingle();if(!p)notFound();const fields=[...(p.custom_input_fields??[])].sort((a,b)=>a.sort_order-b.sort_order);return <main><header className="header"><div className="container header-inner"><a className="brand" href="/">Sekhon Studio</a><a href="/shop">← Shop</a></div></header><section className="section"><div className="container" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:48}}><div className="thumb" style={{aspectRatio:"4/3"}}>Product image</div><div><p className="muted">{p.product_type==="custom"?"CUSTOM 3D PRINT":"3D PRINTED PRODUCT"}</p><h1 style={{fontSize:42,margin:"0 0 12px"}}>{p.name}</h1><div className="price" style={{fontSize:24}}>₹{Number(p.price).toLocaleString("en-IN")}</div><p>{p.description}</p>{(p.product_variants??[]).length>0&&<div style={{marginTop:24}}><strong>Options</strong>{p.product_variants.map((v:any)=><label key={v.id} style={{display:"block",marginTop:8}}><input type="radio" name="variant" value={v.id}/> {v.name||v.sku} {v.price?"— ₹"+Number(v.price).toLocaleString("en-IN"):""}</label>)}</div>}{fields.length>0&&<div style={{marginTop:24}}><strong>Customize your product</strong>{fields.map((f:any)=><label key={f.id} style={{display:"block",marginTop:14}}>{f.label}{f.required?" *":""}<input name={f.field_key} type={f.field_type==="color"?"color":f.field_type==="number"?"number":"text"} placeholder={f.placeholder||""} required={f.required} style={{display:"block",width:"100%",padding:12,marginTop:6,border:"1px solid #ddd",borderRadius:10}}/>{f.help_text&&<small className="muted">{f.help_text}</small>}</label>)}</div>}<button className="icon-btn" style={{marginTop:24,padding:"14px 20px"}}>Add to cart</button></div></div></section></main>}
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { Navigation } from "@/components/navigation";
+import { Footer } from "@/components/footer";
+import { Icon } from "@/components/icon";
+export default async function Product({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const db = await createClient();
+  const { data: p, error } = await db
+    .from("products")
+    .select(
+      "id,name,slug,price,compare_at_price,description,short_description,product_type,product_images(storage_path,is_primary),product_variants(id,name,sku,price,active)",
+    )
+    .eq("active", true)
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error) throw new Error("Product unavailable");
+  if (!p) notFound();
+  const image =
+    p.product_images?.find((i) => i.is_primary) ?? p.product_images?.[0];
+  const src = image?.storage_path
+    ? process.env.NEXT_PUBLIC_SUPABASE_URL +
+      "/storage/v1/object/public/product-images/" +
+      image.storage_path
+    : null;
+  return (
+    <>
+      <Navigation />
+      <main className="inner-page">
+        <Link className="text-link" href="/shop">
+          ← Back to the collection
+        </Link>
+        <div className="product-detail" style={{ marginTop: 35 }}>
+          <div className="product-photo">
+            {src ? (
+              <Image
+                src={src}
+                alt={p.name}
+                fill
+                priority
+                sizes="(max-width:760px) 90vw, 45vw"
+              />
+            ) : (
+              <Icon name="box" width={64} height={64} />
+            )}
+          </div>
+          <section>
+            <p className="eyebrow">
+              {p.product_type === "custom"
+                ? "MADE PERSONAL"
+                : "THE STUDIO COLLECTION"}
+            </p>
+            <h1>{p.name}</h1>
+            <p className="price" style={{ fontSize: 24 }}>
+              ₹{Number(p.price).toLocaleString("en-IN")}{" "}
+              {p.compare_at_price &&
+              Number(p.compare_at_price) > Number(p.price) ? (
+                <del className="muted">
+                  ₹{Number(p.compare_at_price).toLocaleString("en-IN")}
+                </del>
+              ) : null}
+            </p>
+            <p className="product-description">
+              {p.description || p.short_description}
+            </p>
+            {p.product_variants?.filter((v) => v.active).length ? (
+              <div className="variant-summary">
+                <h2>Available options</h2>
+                {p.product_variants
+                  .filter((v) => v.active)
+                  .map((v) => (
+                    <p key={v.id}>
+                      {v.name || v.sku}{" "}
+                      {v.price !== null
+                        ? " · ₹" + Number(v.price).toLocaleString("en-IN")
+                        : ""}
+                    </p>
+                  ))}
+              </div>
+            ) : null}
+            <div className="contact-note">
+              <p>
+                Online purchasing is being prepared. Explore custom 3D for
+                studio contact details and personalized creations.
+              </p>
+              <Link className="button black" href="/custom">
+                Explore custom 3D <Icon name="arrow" />
+              </Link>
+            </div>
+          </section>
+        </div>
+      </main>
+      <Footer />
+    </>
+  );
+}
